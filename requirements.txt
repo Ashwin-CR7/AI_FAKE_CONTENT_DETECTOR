@@ -1,0 +1,7 @@
+streamlit==1.29.0
+torch==2.2.0+cpu
+torchvision==0.17.1+cpu
+pillow
+numpy
+opencv-python-headless
+gdown
