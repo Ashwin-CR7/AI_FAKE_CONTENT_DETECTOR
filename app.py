@@ -1,13 +1,3 @@
-from pyngrok import ngrok
-import threading
-import streamlit as st
-
-# Open a public tunnel to the Streamlit app
-def start_ngrok():
-    url = ngrok.connect(addr=8501)
-    print("Public URL:", url)
-
-threading.Thread(target=start_ngrok).start()
 import streamlit as st
 import torch
 import torch.nn as nn
@@ -39,13 +29,6 @@ st.markdown("""
         color: gray;
         margin-bottom: 30px;
     }
-    .result-box {
-        padding: 20px;
-        border-radius: 12px;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -73,14 +56,18 @@ os.makedirs(MODEL_DIR, exist_ok=True)
 if not os.path.exists(MODEL_PATH):
     with st.spinner("🔄 Downloading AI model (one-time setup)..."):
         gdown.download(MODEL_URL, MODEL_PATH, quiet=False)
-    st.success("✅ Model ready!")
+    st.success("✅ Model downloaded successfully!")
 
-# ---------------- LOAD MODEL ----------------
-model = models.resnet18(weights=None)
-model.fc = nn.Linear(model.fc.in_features, 2)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
-model = model.to(device)
-model.eval()
+# ---------------- LOAD MODEL (CACHED) ----------------
+@st.cache_resource
+def load_model():
+    model = models.resnet18(weights=None)
+    model.fc = nn.Linear(model.fc.in_features, 2)
+    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
+    model.eval()
+    return model
+
+model = load_model()
 
 # ---------------- TRANSFORM ----------------
 transform = transforms.Compose([
@@ -100,7 +87,7 @@ if option == "Image":
         image = Image.open(uploaded_image).convert("RGB")
         st.image(image, caption="Uploaded Image", use_column_width=True)
 
-        img_tensor = transform(image).unsqueeze(0).to(device)
+        img_tensor = transform(image).unsqueeze(0)
 
         with torch.no_grad():
             output = model(img_tensor)
@@ -144,7 +131,7 @@ if option == "Video":
 
                 img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 img = Image.fromarray(img)
-                img = transform(img).unsqueeze(0).to(device)
+                img = transform(img).unsqueeze(0)
 
                 with torch.no_grad():
                     output = model(img)
@@ -170,4 +157,3 @@ if option == "Video":
 # ---------------- FOOTER ----------------
 st.markdown("---")
 st.caption("📘 School Project | AI Fake Content Detector | Built with Streamlit & PyTorch")
-
