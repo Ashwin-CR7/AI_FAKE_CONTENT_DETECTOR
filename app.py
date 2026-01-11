@@ -1,3 +1,13 @@
+from pyngrok import ngrok
+import threading
+import streamlit as st
+
+# Open a public tunnel to the Streamlit app
+def start_ngrok():
+    url = ngrok.connect(addr=8501)
+    print("Public URL:", url)
+
+threading.Thread(target=start_ngrok).start()
 import streamlit as st
 import torch
 import torch.nn as nn
