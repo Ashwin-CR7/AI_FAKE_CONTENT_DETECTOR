@@ -1,4 +1,6 @@
-streamlit==1.29.0
+streamlit
+torch
+torchvision
 pillow
 numpy
 opencv-python-headless
